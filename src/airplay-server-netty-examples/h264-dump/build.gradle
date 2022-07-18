@@ -1,0 +1,5 @@
+apply from: '../../constants.gradle'
+
+dependencies {
+    implementation 'com.github.serezhka:fdk-aac-jni:' + project.ext.libVersionFdkAacJni
+}

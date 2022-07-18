@@ -1,0 +1,7 @@
+apply from: '../../constants.gradle'
+
+dependencies {
+    implementation 'net.java.dev.jna:jna:'          + project.ext.libVersionJna
+    implementation 'net.java.dev.jna:jna-platform:' + project.ext.libVersionJna
+    implementation 'uk.co.caprica:vlcj:'            + project.ext.libVersionVLCj
+}

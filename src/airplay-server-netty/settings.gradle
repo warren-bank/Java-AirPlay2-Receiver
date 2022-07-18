@@ -1,0 +1,4 @@
+rootProject.name = 'airplay-server-netty'
+
+include ':airplay-lib'
+project(':airplay-lib').projectDir = new File(rootDir, '../airplay-lib')

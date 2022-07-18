@@ -1,0 +1,40 @@
+plugins {
+    id 'java-library'
+}
+
+apply from: '../constants.gradle'
+
+java {
+    sourceCompatibility = project.ext.javaVersionNetty
+    targetCompatibility = project.ext.javaVersionNetty
+}
+
+group   project.ext.releaseGroup
+version project.ext.releaseVersion
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':airplay-lib')
+
+    implementation 'io.netty:netty-all:'  + project.ext.libVersionNetty
+    implementation 'org.slf4j:slf4j-api:' + project.ext.libVersionSlf4j
+}
+
+task fatJar(type: Jar) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    archiveClassifier.set('all')
+    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
+task jarSources(type: Jar) {
+    archiveClassifier.set('sources')
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives jarSources
+}

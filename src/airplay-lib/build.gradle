@@ -1,0 +1,40 @@
+plugins {
+    id 'java-library'
+}
+
+apply from: '../constants.gradle'
+
+java {
+    sourceCompatibility = project.ext.javaVersion
+    targetCompatibility = project.ext.javaVersion
+}
+
+group   project.ext.releaseGroup
+version project.ext.releaseVersion
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.jmdns:jmdns:'                    + project.ext.libVersionJmDNS
+    implementation 'net.i2p.crypto:eddsa:'               + project.ext.libVersionEddsa
+    implementation 'org.whispersystems:curve25519-java:' + project.ext.libVersionCurve25519
+    implementation 'com.googlecode.plist:dd-plist:'      + project.ext.libVersionDdPlist
+    implementation 'org.slf4j:slf4j-api:'                + project.ext.libVersionSlf4j
+}
+
+task fatJar(type: Jar) {
+    archiveClassifier.set('all')
+    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
+task jarSources(type: Jar) {
+    archiveClassifier.set('sources')
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives jarSources
+}

@@ -1,0 +1,8 @@
+apply from: '../../constants.gradle'
+
+dependencies {
+    implementation 'net.java.dev.jna:jna:'                      + project.ext.libVersionJna
+    implementation 'net.java.dev.jna:jna-platform:'             + project.ext.libVersionJna
+    implementation 'org.freedesktop.gstreamer:gst1-java-core:'  + project.ext.libVersionGstreamerCore
+    implementation 'org.freedesktop.gstreamer:gst1-java-swing:' + project.ext.libVersionGstreamerSwing
+}

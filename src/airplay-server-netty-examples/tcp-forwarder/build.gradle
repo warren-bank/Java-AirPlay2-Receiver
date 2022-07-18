@@ -1,0 +1,6 @@
+apply from: '../../constants.gradle'
+
+dependencies {
+    implementation 'io.netty:netty-all:'              + project.ext.libVersionNetty
+    implementation 'com.github.serezhka:fdk-aac-jni:' + project.ext.libVersionFdkAacJni
+}

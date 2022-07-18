@@ -1,0 +1,52 @@
+plugins {
+    id 'io.freefair.lombok'              version "${pluginVersionLombok}"
+    id 'org.springframework.boot'        version "${pluginVersionSpringBoot}"
+    id 'io.spring.dependency-management' version "${pluginVersionSpringDeps}"
+}
+
+apply from: '../constants.gradle'
+
+wrapper {
+    gradleVersion    = project.ext.gradleVersion
+    distributionType = Wrapper.DistributionType.ALL
+}
+
+subprojects {
+    if ((it.name != 'airplay-lib') && (it.name != 'airplay-server-netty')) {
+        apply plugin: 'java'
+        apply plugin: 'io.freefair.lombok'
+        apply plugin: 'org.springframework.boot'
+        apply plugin: 'io.spring.dependency-management'
+
+        apply from: "${rootProject.projectDir}/../constants.gradle"
+
+        java {
+            sourceCompatibility = project.ext.javaVersionNetty
+            targetCompatibility = project.ext.javaVersionNetty
+        }
+
+        group   project.ext.releaseGroup
+        version project.ext.releaseVersion
+
+        repositories {
+            mavenCentral()
+            maven {
+                url 'https://jitpack.io'
+            }
+        }
+
+        dependencyManagement {
+            imports {
+                mavenBom('org.springframework.boot:spring-boot-dependencies:' + "${pluginVersionSpringBoot}")
+            }
+        }
+
+        dependencies {
+            implementation project(':airplay-lib')
+            implementation project(':airplay-server-netty')
+
+            annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+            implementation      'org.springframework.boot:spring-boot-starter'
+        }
+    }
+}

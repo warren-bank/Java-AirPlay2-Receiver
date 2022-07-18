@@ -1,0 +1,5 @@
+apply from: '../../constants.gradle'
+
+dependencies {
+    implementation 'io.netty:netty-all:' + project.ext.libVersionNetty
+}

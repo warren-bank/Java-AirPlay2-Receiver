@@ -1,0 +1,52 @@
+project.ext {
+    gradleVersion             = '7.3'
+    javaVersion               = JavaVersion.VERSION_1_9
+    releaseGroup              = 'com.github.warren_bank.java_airplay2_receiver'
+    releaseVersion            = '1.0.5'
+
+    // ======
+    // common
+    // ======
+    libVersionSlf4j           = '1.7.36'
+
+    // ===========
+    // airplay-lib
+    // ===========
+    libVersionJmDNS           = '3.5.8'
+    libVersionEddsa           = '0.3.0'
+    libVersionCurve25519      = '0.5.0'
+    libVersionDdPlist         = '1.23'
+
+    // ====================
+    // airplay-server-netty
+    // ====================
+    javaVersionNetty          = JavaVersion.VERSION_11
+    libVersionNetty           = '4.1.77.Final'
+
+    // ==============================
+    // airplay-server-netty-examples:
+    //   h264-dump
+    //   tcp-forwarder
+    // ==============================
+    libVersionFdkAacJni       = '1.0.0'
+
+    // ==============================
+    // airplay-server-netty-examples:
+    //   gstreamer-player
+    //   vlcj-player
+    // ==============================
+    libVersionJna             = '5.11.0'
+
+    // ==============================
+    // airplay-server-netty-examples:
+    //   gstreamer-player
+    // ==============================
+    libVersionGstreamerCore   = '1.4.0'
+    libVersionGstreamerSwing  = '0.9.0'
+
+    // ==============================
+    // airplay-server-netty-examples:
+    //   vlcj-player
+    // ==============================
+    libVersionVLCj            = '4.7.2'
+}

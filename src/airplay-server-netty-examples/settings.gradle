@@ -1,0 +1,11 @@
+include 'gstreamer-player'
+include 'h264-dump'
+include 'jmuxer-player'
+include 'tcp-forwarder'
+include 'vlcj-player'
+
+include ':airplay-lib'
+project(':airplay-lib').projectDir = new File(rootDir, '../airplay-lib')
+
+include ':airplay-server-netty'
+project(':airplay-server-netty').projectDir = new File(rootDir, '../airplay-server-netty')
