@@ -2,7 +2,7 @@ project.ext {
     gradleVersion             = '7.3'
     javaVersion               = JavaVersion.VERSION_1_9
     releaseGroup              = 'com.github.warren_bank.java_airplay2_receiver'
-    releaseVersion            = '1.0.5'
+    releaseVersion            = '1.0.6'
 
     // ======
     // common

@@ -33,6 +33,15 @@ public class AirPlay {
     }
 
     /**
+     * {@code /pair-setup-pin}
+     * <p>
+     * Performs the initial 3-step pairing handshake
+     */
+    public void pairSetupPin(InputStream in, OutputStream out) throws Exception {
+        pairing.pairSetupPin(in, out);
+    }
+
+    /**
      * {@code /pair-setup}
      * <p>
      * Writes EdDSA public key bytes to output stream

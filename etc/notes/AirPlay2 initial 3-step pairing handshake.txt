@@ -1,0 +1,191 @@
+----------------------------------------
+
+https://github.com/openairplay/AirPlayAuth
+https://github.com/openairplay/AirPlayAuth/blob/master/src/main/java/eu/airaudio/airplay/AirPlayAuthExample.java
+
+https://github.com/openairplay/AirPlayAuth/tree/master/src/main/java/eu/airaudio/airplay/auth
+https://github.com/openairplay/AirPlayAuth/blob/master/src/main/java/eu/airaudio/airplay/auth/AirPlayAuth.java
+https://github.com/openairplay/AirPlayAuth/blob/master/src/main/java/eu/airaudio/airplay/auth/AuthUtils.java
+https://github.com/openairplay/AirPlayAuth/blob/master/src/main/java/eu/airaudio/airplay/auth/crypt/srp6/AppleSRP6ClientSessionImpl.java
+https://github.com/openairplay/AirPlayAuth/blob/master/src/main/java/eu/airaudio/airplay/auth/crypt/srp6/ServerEvidenceRoutineImpl.java
+
+https://bitbucket.org/connect2id/nimbus-srp/src/master/
+https://mvnrepository.com/artifact/com.nimbusds/srp6a
+
+https://github.com/Fi5t/NimbusSRP-Android
+https://github.com/Fi5t/NimbusSRP-Android/blob/master/nimbusds/src/main/java/com/nimbusds/srp6/SRP6Session.java
+https://github.com/Fi5t/NimbusSRP-Android/blob/master/nimbusds/src/main/java/com/nimbusds/srp6/SRP6ClientSession.java
+https://github.com/Fi5t/NimbusSRP-Android/blob/master/nimbusds/src/main/java/com/nimbusds/srp6/SRP6CryptoParams.java
+https://github.com/Fi5t/NimbusSRP-Android/blob/master/nimbusds/src/main/java/com/nimbusds/srp6/SRP6ServerEvidenceContext.java
+https://github.com/Fi5t/NimbusSRP-Android/blob/master/nimbusds/src/main/java/com/nimbusds/srp6/ServerEvidenceRoutine.java
+https://mvnrepository.com/artifact/com.nimbusds/srp6a-android
+
+https://github.com/serezhka/java-airplay-lib/blob/1.0.5/src/main/java/com/github/serezhka/jap2lib/AirPlay.java#L21
+https://github.com/serezhka/java-airplay-lib/blob/1.0.5/src/main/java/com/github/serezhka/jap2lib/Pairing.java
+
+https://github.com/serezhka/java-airplay-server/blob/1.0.5/src/main/java/com/github/serezhka/jap2server/AirPlayServer.java
+https://github.com/serezhka/java-airplay-server/blob/1.0.5/src/main/java/com/github/serezhka/jap2server/internal/ControlServer.java
+https://github.com/serezhka/java-airplay-server/blob/1.0.5/src/main/java/com/github/serezhka/jap2server/internal/handler/control/PairingHandler.java
+
+https://github.com/postlund/pyatv/blob/master/docs/documentation/protocols.md#pairing
+https://github.com/philippe44/RAOP-Player/blob/master/pairing/pairing.pl
+  misc..
+
+----------------------------------------
+
+client:
+  String pin                  = AuthUtils.randomString( 4);
+  String clientId             = AuthUtils.randomString(16);
+  String clientPrivateKey     = net.i2p.crypto.eddsa.Utils.bytesToHex(new KeyPairGenerator().generateKeyPair().getPrivate().getEncoded());
+  String token                = clientId + "@" + clientPrivateKey;
+
+  PKCS8EncodedKeySpec encoded = new PKCS8EncodedKeySpec(net.i2p.crypto.eddsa.Utils.hexToBytes(clientPrivateKey));
+  EdDSAPrivateKey     authKey = new EdDSAPrivateKey(encoded);
+
+notes:
+* "pin" is a password that the client would typically obtain from the user via GUI
+
+----------------------------------------
+
+client -> server:
+  POST /pair-pin-start HTTP/1.0
+  User-Agent: AirPlay/320.20
+  Connection: keep-alive
+
+server -> client:
+  HTTP/1.0 200
+  Content-Length: 0
+
+----------------------------------------
+// step 1:
+
+client -> server:
+  POST /pair-setup-pin HTTP/1.0
+  User-Agent: AirPlay/320.20
+  Connection: keep-alive
+  Content-Type: "application/x-apple-binary-plist
+  Content-Length: xxx
+
+  PList: {
+    "method": "pin",
+    "user":   clientId
+  }
+
+server -> client:
+  HTTP/1.0 200
+  Content-Type: "application/x-apple-binary-plist
+  Content-Length: xxx
+
+  PList: {
+    "pk":   serverPublicKey,
+    "salt": passwordSalt
+  }
+
+----------------------------------------
+// step 2:
+
+client:
+  final SRP6CryptoParams config = SRP6CryptoParams.getInstance(2048, "SHA-1");
+  final SRP6ClientSession srp6ClientSession = new AppleSRP6ClientSessionImpl();
+  srp6ClientSession.step1(clientId, pin);
+  srp6ClientSession.step2(config, BigIntegerUtils.bigIntegerFromBytes(step1Response.SALT), BigIntegerUtils.bigIntegerFromBytes(step1Response.PK));
+
+  // SRP6Session.A
+  BigInteger clientPublicKey         = srp6ClientSession.getPublicClientValue();
+  byte[]     publicClientValueA      = BigIntegerUtils.bigIntegerToBytes(clientPublicKey);
+
+  // SRP6Session.M1
+  BigInteger clientEvidenceMessage   = srp6ClientSession.getClientEvidenceMessage();
+  byte[]     clientEvidenceMessageM1 = BigIntegerUtils.bigIntegerToBytes(clientEvidenceMessage);
+
+client -> server:
+  POST /pair-setup-pin HTTP/1.0
+  User-Agent: AirPlay/320.20
+  Connection: keep-alive
+  Content-Type: "application/x-apple-binary-plist
+  Content-Length: xxx
+
+  PList: {
+    "pk":    publicClientValueA,
+    "proof": clientEvidenceMessageM1
+  }
+
+server -> client:
+  HTTP/1.0 200
+  Content-Type: "application/x-apple-binary-plist
+  Content-Length: xxx
+
+  PList: {
+    "proof": M2
+  }
+
+----------------------------------------
+// step 3:
+
+client:
+  BigInteger M2 = BigIntegerUtils.bigIntegerFromBytes(step2Response.PROOF);
+  srp6ClientSession.step3(M2);
+  // -----------------------------------
+  // assertion: computes M2 locally, and compares computed value to M2 received from server
+  // srp6ClientSession.step3 contains code to calculate value of M2
+  // -----------------------------------
+  //   using classes:
+  //     ServerEvidenceRoutine serverEvidenceRoutine = new ServerEvidenceRoutineImpl(srp6ClientSession);
+  //     SRP6ServerEvidenceContext ctx = new SRP6ServerEvidenceContext(A, M1, S);
+  //     BigInteger computedM2 = serverEvidenceRoutine.computeServerEvidence(config, ctx);
+  // -----------------------------------
+  //   directly:
+  //     import java.io.ByteArrayOutputStream;
+  //     import java.math.BigInteger;
+  //     import java.security.MessageDigest;
+  //
+  //     digest = MessageDigest.getInstance("SHA-1");
+  //     digest.update(passwordSalt);
+  //     digest.update(new byte[]{0, 0, 0, 0});
+  //     byte[] K1 = digest.digest();
+  //     digest.update(passwordSalt);
+  //     digest.update(new byte[]{0, 0, 0, 1});
+  //     byte[] K2 = digest.digest();
+  //     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+  //     outputStream.write(K1);
+  //     outputStream.write(K2);
+  //     byte[] sessionKeyHash = outputStream.toByteArray();
+  //
+  //     digest = MessageDigest.getInstance("SHA-1");
+  //     digest.update(publicClientValueA);
+  //     digest.update(clientEvidenceMessageM1);
+  //     digest.update(sessionKeyHash);
+  //     BigInteger computedM2 = new BigInteger(1, digest.digest());
+  // -----------------------------------
+
+client -> server:
+  POST /pair-setup-pin HTTP/1.0
+  User-Agent: AirPlay/320.20
+  Connection: keep-alive
+  Content-Type: "application/x-apple-binary-plist
+  Content-Length: xxx
+
+  PList: {
+    "epk":     // 16 bytes
+    "authTag": // 16 bytes
+  }
+
+server -> client:
+  HTTP/1.0 200
+  Content-Type: "application/x-apple-binary-plist
+  Content-Length: xxx
+
+  PList: {
+    "epk":     // 16 bytes
+    "authTag": // 16 bytes
+  }
+
+notes:
+* the response value isn't validated, verified, or used in any way
+* presumably, this is a shared secret and all that's required is that the server echo the same values back to the client as an acknowledgement
+
+summary:
+* none of the values exchanged in this handshake are retained for later use
+* it appears that all that's required is that the process succeed without throwing any Exception
+
+----------------------------------------

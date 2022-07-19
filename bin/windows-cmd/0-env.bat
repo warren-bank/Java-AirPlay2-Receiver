@@ -33,4 +33,4 @@ if not exist "%LOG_DIR%" mkdir "%LOG_DIR%"
 rem :: =================================
 rem :: constants
 rem :: =================================
-set RELEASE_VERSION=1.0.5
+set RELEASE_VERSION=1.0.6

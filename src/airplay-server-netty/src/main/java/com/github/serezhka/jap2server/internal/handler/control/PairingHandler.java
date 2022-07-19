@@ -24,6 +24,16 @@ public class PairingHandler extends ControlHandler {
                 session.getAirPlay().info(new ByteBufOutputStream(response.content()));
                 return sendResponse(ctx, request, response);
             }
+            case "/pair-pin-start": {
+                var response = createResponseForRequest(request);
+                return sendResponse(ctx, request, response);
+            }
+            case "/pair-setup-pin": {
+                var response = createResponseForRequest(request);
+                response.headers().add("Content-Type", "application/x-apple-binary-plist");
+                session.getAirPlay().pairSetupPin(new ByteBufInputStream(request.content()), new ByteBufOutputStream(response.content()));
+                return sendResponse(ctx, request, response);
+            }
             case "/pair-setup": {
                 var response = createResponseForRequest(request);
                 session.getAirPlay().pairSetup(new ByteBufOutputStream(response.content()));
@@ -31,8 +41,7 @@ public class PairingHandler extends ControlHandler {
             }
             case "/pair-verify": {
                 var response = createResponseForRequest(request);
-                session.getAirPlay().pairVerify(new ByteBufInputStream(request.content()),
-                        new ByteBufOutputStream(response.content()));
+                session.getAirPlay().pairVerify(new ByteBufInputStream(request.content()), new ByteBufOutputStream(response.content()));
                 return sendResponse(ctx, request, response);
             }
         }

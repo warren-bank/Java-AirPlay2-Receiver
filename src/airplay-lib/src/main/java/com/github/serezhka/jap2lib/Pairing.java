@@ -1,6 +1,8 @@
 package com.github.serezhka.jap2lib;
 
 import com.dd.plist.BinaryPropertyListWriter;
+import com.dd.plist.NSData;
+import com.dd.plist.NSDictionary;
 import com.dd.plist.NSObject;
 import com.dd.plist.PropertyListParser;
 import net.i2p.crypto.eddsa.EdDSAEngine;
@@ -27,12 +29,15 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Random;
 
 class Pairing {
 
     private static final Logger log = LoggerFactory.getLogger(Pairing.class);
 
     private final KeyPair keyPair;
+    private final byte[] salt;
 
     private byte[] edTheirs;
     private byte[] ecdhOurs;
@@ -43,12 +48,45 @@ class Pairing {
 
     Pairing() {
         this.keyPair = new KeyPairGenerator().generateKeyPair();
+        this.salt    = new byte[16];
+
+        new Random().nextBytes(salt);
     }
 
     void info(OutputStream out) throws Exception {
         URL response = Pairing.class.getResource("/info-response.xml");
         NSObject serverInfo = PropertyListParser.parse(response.openStream());
         BinaryPropertyListWriter.write(out, serverInfo);
+    }
+
+    void pairSetupPin(InputStream request, OutputStream response) throws Exception {
+        NSDictionary reqPostData = AuthUtils.parsePostData(request);
+        byte[] resPostData = null;
+
+        if (reqPostData.containsKey("method") && reqPostData.containsKey("user")) { // step #1
+            resPostData = AuthUtils.createPList(new HashMap<String, byte[]>() {{
+                put("pk",   ((EdDSAPublicKey) keyPair.getPublic()).getAbyte());
+                put("salt", salt);
+            }});
+        }
+        else if (reqPostData.containsKey("pk") && reqPostData.containsKey("proof")) { // step #2
+            resPostData = AuthUtils.createPList(new HashMap<String, byte[]>() {{
+                put("proof", AuthUtils.computeM2(
+                    salt,
+                    ((NSData) reqPostData.get("pk")).bytes(),
+                    ((NSData) reqPostData.get("proof")).bytes()
+                ));
+            }});
+        }
+        else if (reqPostData.containsKey("epk") && reqPostData.containsKey("authTag")) { // step #3
+            resPostData = AuthUtils.createPList(new HashMap<String, byte[]>() {{
+                put("epk",     ((NSData) reqPostData.get("epk")).bytes());
+                put("authTag", ((NSData) reqPostData.get("authTag")).bytes());
+            }});
+        }
+
+        if ((resPostData != null) && (resPostData.length > 0))
+            response.write(resPostData);
     }
 
     void pairSetup(OutputStream out) throws IOException {
